@@ -72,7 +72,7 @@ struct TvHistoryResponse {
     #[serde(default)]
     c: Vec<f64>,
     #[serde(default)]
-    v: Vec<Option<f64>>,
+    v: Vec<f64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -474,10 +474,7 @@ impl MarketDataProvider for BoerseFrankfurtProvider {
                 .l
                 .get(i)
                 .and_then(|&v| Decimal::try_from(v / divisor).ok());
-            let volume = body
-                .v
-                .get(i)
-                .and_then(|value| value.and_then(|v| Decimal::try_from(v).ok()));
+            let volume = body.v.get(i).and_then(|&v| Decimal::try_from(v).ok());
 
             quotes.push(Quote {
                 timestamp,
@@ -770,20 +767,19 @@ mod tests {
     fn test_parse_tv_history_response() {
         let json = r#"{
             "s": "ok",
-            "t": [1772528400, 1772614800, 1772701200],
-            "o": [68.45, 69.83, 70.12],
-            "h": [70.2, 70.29, 71.05],
-            "l": [68.38, 68.45, 69.8],
-            "c": [70.02, 69.06, 70.75],
-            "v": [11292866.27, 6062156.3, null]
+            "t": [1772528400, 1772614800],
+            "o": [68.45, 69.83],
+            "h": [70.2, 70.29],
+            "l": [68.38, 68.45],
+            "c": [70.02, 69.06],
+            "v": [11292866.27, 6062156.3]
         }"#;
 
         let resp: TvHistoryResponse = serde_json::from_str(json).unwrap();
         assert_eq!(resp.s, "ok");
-        assert_eq!(resp.t.len(), 3);
+        assert_eq!(resp.t.len(), 2);
         assert_eq!(resp.c[0], 70.02);
-        assert_eq!(resp.v[1], Some(6062156.3));
-        assert_eq!(resp.v[2], None);
+        assert_eq!(resp.v[1], 6062156.3);
     }
 
     #[test]
